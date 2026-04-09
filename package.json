@@ -1,7 +1,7 @@
 {
   "name": "jermabar",
   "version": "1.0.0",
-  "description": "Բarrayín Jem-achap — Armenian Word Temperature Game",
+  "description": "Բառային Ջեմ-աչափ — Armenian Word Temperature Game",
   "private": true,
   "scripts": {
     "dev": "npx serve . --cors",

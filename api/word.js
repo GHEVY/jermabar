@@ -1,6 +1,3 @@
-// Vercel Serverless Function: GET /api/word?q=կракар
-// Returns score for a single word
-// Android & Web can call: https://your-app.vercel.app/api/word?q=կrak
 
 import words from '../../words.json' assert { type: 'json' };
 
@@ -27,7 +24,7 @@ export default function handler(req, res) {
     return res.status(200).json({ word: q, score: words[q], found: true });
   }
 
-  // Deterministic pseudo-random for unknown words (max 30%)
+
   let h = 0;
   for (let i = 0; i < q.length; i++) {
     h = (q.charCodeAt(i) + ((h << 5) - h)) | 0;

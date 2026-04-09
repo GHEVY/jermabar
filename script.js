@@ -1,9 +1,7 @@
-// ── State ──────────────────────────────────────────────────────────────────────
 let bestPct = -1;
 let history = [];
 let hintCooldown = false;
 
-// ── DOM References ─────────────────────────────────────────────────────────────
 const wordInput   = document.getElementById('word-input');
 const curInd      = document.getElementById('cur-indicator');
 const bestInd     = document.getElementById('best-indicator');
@@ -19,9 +17,7 @@ const hintBtn     = document.getElementById('hint-btn');
 const hintPopup   = document.getElementById('hint-popup');
 const hintText    = document.getElementById('hint-text');
 const hintClose   = document.getElementById('hint-close');
-const apiStatus   = document.getElementById('api-status');
 
-// ── Color Helpers ──────────────────────────────────────────────────────────────
 function lerpColor(a, b, t) {
   return `rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.round(a[1]+(b[1]-a[1])*t)},${Math.round(a[2]+(b[2]-a[2])*t)})`;
 }
@@ -31,7 +27,11 @@ function getColor(pct) {
   return lerpColor([123,97,255], [255,61,0], (pct - 50) / 50);
 }
 
-// ── Scale / Indicators ────────────────────────────────────────────────────────
+function isArmenianWord(word) {
+  const armenianRegex = /^[\u0531-\u058F\s]+$/u;
+  return armenianRegex.test(word);
+}
+
 function clampedLeft(pct) {
   return Math.min(Math.max(pct, 0), 100) + '%';
 }
@@ -54,7 +54,6 @@ function updateScale(pct) {
   }
 }
 
-// ── Result Card ───────────────────────────────────────────────────────────────
 function updateResultCard(word, pct, source) {
   const color = getColor(pct);
   resultCard.classList.add('visible');
@@ -67,7 +66,7 @@ function updateResultCard(word, pct, source) {
 
   const badge = document.getElementById('result-source');
   if (badge) {
-    badge.textContent = source === 'api' ? '🌐 API' : source === 'db' ? '📖 DB' : '🎲 Պատahakan';
+    badge.textContent = source === 'api' ? '🌐 API' : source === 'db' ? '📖 DB' : '🎲 Պատահական';
     badge.style.color = source === 'random' ? 'var(--muted)' : '#7B61FF';
   }
   resultCard.style.animation = 'none';
@@ -75,7 +74,6 @@ function updateResultCard(word, pct, source) {
   resultCard.style.animation = '';
 }
 
-// ── History Rendering ─────────────────────────────────────────────────────────
 function renderHistory() {
   historyList.innerHTML = '';
   const sorted = [...history].sort((a, b) => b.pct - a.pct);
@@ -107,7 +105,6 @@ function renderHistory() {
   });
 }
 
-// ── Particles ─────────────────────────────────────────────────────────────────
 function spawnParticles(pct) {
   if (pct < 85) return;
   const layer = document.getElementById('particles');
@@ -130,77 +127,31 @@ function spawnParticles(pct) {
   }
 }
 
-// ── API Status Badge ──────────────────────────────────────────────────────────
-function updateApiStatusBadge() {
-  if (!apiStatus) return;
-  if (isRemoteActive()) {
-    apiStatus.textContent = '🌐 API mitsvac';
-    apiStatus.className = 'api-badge connected';
-  } else {
-    apiStatus.textContent = '📂 Teghakan fayl';
-    apiStatus.className = 'api-badge local';
-  }
-}
-
-// ── Hint System ───────────────────────────────────────────────────────────────
-// Tier messages shown based on the hint word's score range
-const HINT_TIERS = [
-  {
-    min: 80,
-    prefix: '🔥 Շատ տաք բառ',
-    suffix: 'Փորձեք նմանութամբ։'
-  },
-  {
-    min: 50,
-    prefix: '☀️ Ջերմ բառ',
-    suffix: 'Կաpkveq նման բաer։'
-  },
-  {
-    min: 25,
-    prefix: '🌤 Չezarmik',
-    suffix: 'Ավelи serm mтacek'
-  },
-  {
-    min: 0,
-    prefix: '❄️ Sar bарр',
-    suffix: 'Tipеl уshavorin։'
-  }
-];
-
-function getTier(score) {
-  return HINT_TIERS.find(t => score >= t.min) || HINT_TIERS[HINT_TIERS.length - 1];
-}
-
-function showHint() {
+async function showHint() {
   if (hintCooldown) return;
 
+  await loadWords();
   const db = getWordDb();
   const entries = Object.entries(db);
 
   if (entries.length === 0) {
-    hintText.textContent = 'Բazan depem berrнvac che...';
+    hintText.textContent = 'Բազան դեռ բեռնված չե...';
     openHintPopup();
     return;
   }
 
-  // Prefer hot words (score >= 50) not yet tried by the user
   const tried = new Set(history.map(h => h.word));
   let pool = entries.filter(([w, v]) => v >= 50 && !tried.has(w));
   if (pool.length === 0) pool = entries.filter(([w]) => !tried.has(w));
   if (pool.length === 0) pool = entries;
 
   const [word, score] = pool[Math.floor(Math.random() * pool.length)];
-  const tier = getTier(score);
   const color = getColor(score);
 
-  hintText.innerHTML =
-    `<span style="color:var(--muted);font-size:0.8rem;letter-spacing:1px">${tier.prefix}</span><br>` +
-    `<strong style="font-size:1.25rem;letter-spacing:2px;color:${color}">${word}</strong>` +
-    `<span style="color:var(--muted);font-size:0.85rem;margin-left:8px">${score.toFixed(1)}%</span>`;
+  hintText.innerHTML = `<strong style="font-size:1.25rem;letter-spacing:2px;color:${color}">${word}</strong>`;
 
   openHintPopup();
 
-  // 3s cooldown to prevent spam
   hintCooldown = true;
   hintBtn.style.opacity = '0.45';
   hintBtn.style.pointerEvents = 'none';
@@ -212,17 +163,34 @@ function showHint() {
 }
 
 function openHintPopup() {
+  if (!hintPopup) return;
+  hintPopup.style.display = 'block';
+  hintPopup.classList.remove('visible');
+  void hintPopup.offsetWidth;
   hintPopup.classList.add('visible');
 }
 
 function closeHintPopup() {
+  if (!hintPopup) return;
   hintPopup.classList.remove('visible');
 }
 
-// ── Main Process ──────────────────────────────────────────────────────────────
 async function processWord(rawWord) {
   const word = rawWord.trim().toLowerCase();
   if (!word) return;
+
+  if (!isArmenianWord(word)) {
+    resultCard.classList.add('visible');
+    resultWord.textContent = word;
+    resultScore.textContent = 'Խնդրում ենք գրել հայերենով';
+    resultScore.style.color = 'red';
+    const badge = document.getElementById('result-source');
+    if (badge) badge.textContent = '❌ Սխալ';
+    resultCard.style.animation = 'none';
+    void resultCard.offsetWidth;
+    resultCard.style.animation = '';
+    return;
+  }
 
   wordInput.disabled = true;
   closeHintPopup();
@@ -255,7 +223,6 @@ function clearHistory() {
   renderHistory();
 }
 
-// ── Event Listeners ───────────────────────────────────────────────────────────
 wordInput.addEventListener('keydown', async (e) => {
   if (e.key === 'Enter') {
     const val = wordInput.value.trim();
@@ -264,14 +231,24 @@ wordInput.addEventListener('keydown', async (e) => {
   }
 });
 
-clearBtn.addEventListener('click', clearHistory);
-hintBtn.addEventListener('click', showHint);
-hintClose.addEventListener('click', closeHintPopup);
+function setupEventListeners() {
+  clearBtn.addEventListener('click', clearHistory);
+  hintBtn.addEventListener('click', showHint);
+  hintClose.addEventListener('click', closeHintPopup);
+}
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-window.addEventListener('load', async () => {
-  await loadWords();
-  updateApiStatusBadge();
-  renderHistory();
-  wordInput.focus();
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadWords();
+    renderHistory();
+    wordInput.focus();
+    setupEventListeners();
+  });
+} else {
+  (async () => {
+    await loadWords();
+    renderHistory();
+    wordInput.focus();
+    setupEventListeners();
+  })();
+}

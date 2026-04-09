@@ -26,7 +26,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Animated cosmic background ── */
 .bg-canvas {
   position: fixed;
   inset: 0;
@@ -59,7 +58,6 @@ body {
   to   { opacity: 1; }
 }
 
-/* ── Layout ── */
 .app {
   position: relative;
   z-index: 1;
@@ -72,15 +70,13 @@ body {
   gap: 48px;
 }
 
-/* ── Header ── */
 .header {
   text-align: center;
 }
 
 .logo-word {
-  font-size: clamp(2.4rem, 8vw, 4rem);
-  font-weight: 900;
-  letter-spacing: 8px;
+  font-size: 40px;
+  font-weight: 700;
   text-transform: uppercase;
   background: linear-gradient(135deg, #00E5FF 0%, #7B61FF 40%, #FF3D00 100%);
   -webkit-background-clip: text;
@@ -104,40 +100,12 @@ body {
   font-weight: 300;
 }
 
-/* ── API Status Badge ── */
-.api-badge {
-  display: inline-block;
-  margin-top: 12px;
-  padding: 4px 14px;
-  border-radius: 20px;
-  font-size: 0.7rem;
-  letter-spacing: 1px;
-  font-weight: 600;
-  border: 1px solid;
-  transition: all 0.4s ease;
-}
-
-.api-badge.connected {
-  color: #7B61FF;
-  border-color: rgba(123, 97, 255, 0.4);
-  background: rgba(123, 97, 255, 0.08);
-  text-shadow: 0 0 10px rgba(123, 97, 255, 0.5);
-}
-
-.api-badge.local {
-  color: var(--muted);
-  border-color: var(--border);
-  background: transparent;
-}
-
-/* ── Result Source label ── */
 .result-source {
   margin-top: 6px;
   font-size: 0.7rem;
   letter-spacing: 1px;
 }
 
-/* ── Glass Card (shared) ── */
 .input-card,
 .thermo-section,
 .result-card {
@@ -151,7 +119,6 @@ body {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-/* ── Input ── */
 .input-card {
   transition: box-shadow 0.4s ease, border-color 0.4s ease;
 }
@@ -209,7 +176,6 @@ body {
   color: var(--muted);
 }
 
-/* ── Thermometer Scale ── */
 .thermo-title {
   font-size: 0.7rem;
   letter-spacing: 3px;
@@ -323,7 +289,6 @@ body {
 .thermo-label.cold { color: var(--ice);  text-shadow: 0 0 12px rgba(0, 229, 255, 0.6); }
 .thermo-label.hot  { color: var(--fire); text-shadow: 0 0 12px rgba(255, 61, 0, 0.6); }
 
-/* ── Result Card ── */
 .result-card {
   display: none;
   align-items: center;
@@ -363,7 +328,6 @@ body {
   line-height: 1;
 }
 
-/* ── History ── */
 .history-section {
   width: 100%;
 }
@@ -483,7 +447,6 @@ body {
   letter-spacing: 1px;
 }
 
-/* ── Particles ── */
 .particle-layer {
   position: fixed;
   inset: 0;
@@ -503,7 +466,6 @@ body {
   100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
 }
 
-/* ── Input Row (input + hint btn) ── */
 .input-row {
   display: flex;
   align-items: center;
@@ -513,8 +475,6 @@ body {
 .input-row #word-input {
   flex: 1;
 }
-
-/* ── Hint Button ── */
 .hint-btn {
   flex-shrink: 0;
   width: 40px;
@@ -543,16 +503,17 @@ body {
   transform: scale(0.95);
 }
 
-/* ── Hint Popup ── */
 .hint-popup {
   width: 100%;
+  display: block;
+  z-index: 10;
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
               opacity 0.3s ease,
               margin-top 0.3s ease;
   opacity: 0;
-  margin-top: -40px; /* pull up when hidden */
+  margin-top: -40px; 
 }
 
 .hint-popup.visible {
@@ -620,7 +581,6 @@ body {
   color: var(--text);
 }
 
-/* ── Responsive ── */
 @media (max-width: 480px) {
   .app { padding: 32px 16px 60px; gap: 32px; }
   .input-card,

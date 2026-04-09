@@ -1,40 +1,21 @@
-/**
- * api.js — Ջermabarr Frontend API Client
- *
- * Automatically detects environment:
- *   - Production (Vercel): calls /api/words and /api/word
- *   - Local file (file://): falls back to words.json directly
- *
- * Android app should call:
- *   GET https://your-app.vercel.app/api/words          → full DB
- *   GET https://your-app.vercel.app/api/word?q=կракar  → single word
- */
-
 const API_CONFIG = {
-  // Auto-detect: use same origin in production, empty for local file://
   BASE_URL: (function () {
     const proto = window.location.protocol;
-    if (proto === 'file:') return ''; // local — use words.json fallback
-    return window.location.origin;    // e.g. https://jermabar.vercel.app
+    if (proto === 'file:') return '';
+    return window.location.origin;
   })(),
 
   ENDPOINTS: {
-    WORDS: '/api/words',       // GET → { word: score, ... }
-    WORD:  '/api/word',        // GET ?q=<word> → { word, score, found }
+    WORDS: '/api/words',
+    WORD:  '/api/word',
   },
 
   TIMEOUT_MS: 5000,
 };
 
-// ── Internal state ────────────────────────────────────────────────────────────
 let _wordDb = null;
 let _useRemoteApi = false;
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-/**
- * loadWords()
- * Call once on startup. Tries /api/words first, then falls back to words.json.
- */
 async function loadWords() {
   if (_wordDb) return _wordDb;
 
@@ -52,7 +33,6 @@ async function loadWords() {
     }
   }
 
-  // Fallback — local words.json
   try {
     const res = await fetch('words.json');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -67,26 +47,19 @@ async function loadWords() {
   return _wordDb;
 }
 
-// ── Score Lookup ──────────────────────────────────────────────────────────────
-/**
- * getScore(word)
- * Returns { score: number, source: "db" | "api" | "random" }
- */
 async function getScore(word) {
   const w = word.toLowerCase().trim();
 
-  // 1. Already cached locally
   if (_wordDb && Object.prototype.hasOwnProperty.call(_wordDb, w)) {
     return { score: _wordDb[w], source: 'db' };
   }
 
-  // 2. Ask /api/word for unknown word
   if (API_CONFIG.BASE_URL) {
     try {
       const url  = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.WORD}?q=${encodeURIComponent(w)}`;
       const data = await _fetchWithTimeout(url);
       if (data && typeof data.score === 'number') {
-        if (_wordDb) _wordDb[w] = data.score; // cache it
+        if (_wordDb) _wordDb[w] = data.score;
         return { score: data.score, source: data.found ? 'api' : 'random' };
       }
     } catch (err) {
@@ -94,11 +67,9 @@ async function getScore(word) {
     }
   }
 
-  // 3. Deterministic pseudo-random fallback (max 30%)
   return { score: _pseudoRandom(w), source: 'random' };
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 async function _fetchWithTimeout(url) {
   const ctrl = new AbortController();
   const id   = setTimeout(() => ctrl.abort(), API_CONFIG.TIMEOUT_MS);
@@ -119,6 +90,5 @@ function _pseudoRandom(word) {
   return parseFloat(((Math.abs(Math.sin(h)) * 28) + 0.5).toFixed(1));
 }
 
-// ── Public helpers ────────────────────────────────────────────────────────────
 function isRemoteActive() { return _useRemoteApi; }
 function getWordDb()      { return _wordDb || {}; }
