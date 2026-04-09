@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="hy">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ՋԵՐՄԱԲԱՌ </title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Noto+Sans+Armenian:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="bg-canvas"></div>
+    <div class="stars"></div>
+    <div class="particle-layer" id="particles"></div>
+
+    <div class="app">
+
+        <!-- HEADER -->
+        <header class="header">
+            <div class="logo-word">ՋԵՐՄԱԲԱՌ</div>
+            <p class="subtitle">Բառային Ջերմաչափ</p>
+        </header>
+
+        <!-- INPUT -->
+        <div class="input-card">
+            <div class="input-row">
+                <input type="text" id="word-input" placeholder="Մուտքագրեք բառը" autocomplete="off" spellcheck="false">
+                <button class="hint-btn" id="hint-btn" title="Հուշ">💡</button>
+            </div>
+            <div class="input-hint">
+                Սեղմեք <kbd>Enter</kbd> բառը ստուգելու համար
+            </div>
+        </div>
+
+        <!-- HINT POPUP -->
+        <div class="hint-popup" id="hint-popup" aria-live="polite">
+            <div class="hint-popup-inner">
+                <span class="hint-icon">🌡️</span>
+                <div class="hint-body">
+                    <div class="hint-title">Հուշ</div>
+                    <div class="hint-text" id="hint-text">—</div>
+                </div>
+                <button class="hint-close" id="hint-close">✕</button>
+            </div>
+        </div>
+
+        <!-- SCALE -->
+        <section class="thermo-section">
+            <div class="thermo-title">«Jem» barri motikutyyan skala</div>
+            <div class="scale-wrapper">
+                <div class="indicators-zone">
+                    <div class="indicator" id="cur-indicator" style="left:50%">
+                        <div class="ind-label">Aydpes</div>
+                        <div class="ind-value" id="cur-val">—</div>
+                        <div class="ind-arrow"></div>
+                    </div>
+                    <div class="indicator" id="best-indicator" style="left:50%">
+                        <div class="ind-label">⭐ BEST</div>
+                        <div class="ind-value" id="best-val">—</div>
+                        <div class="ind-arrow"></div>
+                    </div>
+                </div>
+                <div class="thermo-bar-wrap">
+                    <div class="thermo-bar"></div>
+                </div>
+            </div>
+            <div class="thermo-labels">
+                <div class="thermo-label cold">❄️ ՍԱՌԸ</div>
+                <div class="thermo-label hot">🔥 ՏԱՔ</div>
+            </div>
+        </section>
+
+        <!-- LAST RESULT -->
+        <div class="result-card" id="result-card">
+            <div>
+                <div class="result-meta-label">Վերջին բառը</div>
+                <div class="result-word" id="result-word">—</div>
+                <div class="result-source" id="result-source"></div>
+            </div>
+            <div class="result-score-wrap">
+                <div class="result-meta-label">Մոտիկություն</div>
+                <div class="result-score" id="result-score">0%</div>
+            </div>
+        </div>
+
+        <!-- HISTORY -->
+        <section class="history-section">
+            <div class="history-header">
+                <div class="section-title">Պատմություն · Լավագույն արդյունքներ</div>
+                <button class="clear-btn" id="clear-btn">Մաքրել</button>
+            </div>
+            <div class="history-list" id="history-list">
+                <div class="empty-state" id="empty-state">Մուտքագրեք առաջին բառը սկսելու համար 🌡️</div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Load api.js BEFORE script.js -->
+    <script src="api.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
