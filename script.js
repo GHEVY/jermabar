@@ -175,6 +175,11 @@ function closeHintPopup() {
   if (!hintPopup) return;
   hintPopup.classList.remove('visible');
 }
+const response = await fetch('https://jermabar.onrender.com/guess', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ word: wordFromInput })
+});
 
 async function processWord(rawWord) {
   const word = rawWord.trim().toLowerCase();

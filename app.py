@@ -1,18 +1,17 @@
 import numpy as np
-import sqlite3
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
+# Թույլ ենք տալիս բոլորին կապնվել սերվերին
 CORS(app)
 
-# 1. Բեռնում ենք քո սարքած թեթև բազան
+# 1. Բեռնում ենք բազան
 print("Loading vector database...")
 data = np.load("jermabar_final.npz", allow_pickle=True)
 words_list = data['words'].tolist()
 vectors_array = data['vectors']
-
-# Ստեղծում ենք արագ որոնման բառարան
 word_to_index = {word: i for i, word in enumerate(words_list)}
 
 def get_vector(word):
@@ -24,10 +23,19 @@ def get_vector(word):
 def cosine_similarity(v1, v2):
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
+# Այս մասը ավելացրինք, որ "Not Found" չգրի
+@app.route('/')
+def home():
+    return "Jermabar API-ն աշխատում է։ Ուղարկեք POST հարցումներ /guess հասցեին։"
+
 @app.route('/guess', methods=['POST'])
 def guess():
-    user_word = request.json.get('word', '').lower().strip()
-    secret_word = "համակարգիչ" # Սա կարող ես փոխել ամեն օր
+    data_json = request.get_json()
+    if not data_json or 'word' not in data_json:
+        return jsonify({"error": "Բառը բացակայում է"}), 400
+        
+    user_word = data_json.get('word', '').lower().strip()
+    secret_word = "համակարգիչ" 
     
     v_user = get_vector(user_word)
     v_target = get_vector(secret_word)
@@ -45,4 +53,6 @@ def guess():
     })
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    # Render-ի համար կարևոր է վերցնել Port-ը միջավայրից
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
