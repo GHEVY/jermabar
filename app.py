@@ -10,6 +10,7 @@ CORS(app)
 # 1. Բեռնում ենք բազան
 print("Loading vector database...")
 try:
+    # allow_pickle=True-ն անհրաժեշտ է, եթե numpy-ն պահել է օբյեկտներ (ինչպես words list-ը)
     data = np.load("jermabar_final.npz", allow_pickle=True)
     words_list = data['words'].tolist()
     vectors_array = data['vectors']
@@ -17,23 +18,22 @@ try:
     print(f"Database loaded. Total words: {len(words_list)}")
 except Exception as e:
     print(f"Error loading database: {e}")
+    words_list = []
+    vectors_array = []
 
-# 2. Ֆունկցիա՝ ցանկացած (նաև տարօրինակ/երկար) բառ ընտրելու համար
 def select_random_secret_word():
-    # Վերցնում ենք միայն այն բառերը, որոնք պարունակում են հայերեն տառեր
-    # (Սա կօգնի խուսափել թվերից կամ կետադրական նշաններից, եթե այդպիսիք կան բազայում)
+    # Վերցնում ենք միայն հայերեն տառեր պարունակող բառերը
     armenian_words = [w for w in words_list if any('\u0531' <= c <= '\u058F' for c in w)]
-    
     if armenian_words:
-        # Ընտրում ենք բացարձակ պատահական բառ
         return random.choice(armenian_words)
     return "համակարգիչ"
 
-# Սահմանում ենք թիրախային բառը
+# Սահմանում ենք թիրախային բառը սերվերը միանալիս
 secret_word = select_random_secret_word()
 print(f"--- ACTIVE SECRET WORD: {secret_word} ---")
 
 def get_vector(word):
+    if not words_list: return None
     idx = word_to_index.get(word.lower().strip())
     if idx is not None:
         return vectors_array[idx]
@@ -44,14 +44,16 @@ def cosine_similarity(v1, v2):
     norm2 = np.linalg.norm(v2)
     if norm1 == 0 or norm2 == 0:
         return 0
+    # Կիրառվում է վեկտորների սկալյար արտադրյալի բանաձևը
     return np.dot(v1, v2) / (norm1 * norm2)
+
+@app.route('/')
+def home():
+    return "Jermabar API is running!"
 
 @app.route('/get_initial_word', methods=['GET'])
 def get_initial_word():
-    # Սա կվերադարձնի գաղտնի բառը սկզբում ստուգելու համար
-    return jsonify({
-        "word": secret_word
-    })
+    return jsonify({"word": secret_word})
 
 @app.route('/guess', methods=['POST'])
 def guess():
@@ -68,6 +70,7 @@ def guess():
         return jsonify({"error": "Բառը չգտնվեց բազայում"}), 404
         
     score = cosine_similarity(v_user, v_target)
+    # Վերածում ենք տոկոսի (0-100)
     final_score = round(float(score) * 100, 2)
     
     if final_score < 0:
@@ -82,12 +85,11 @@ def guess():
 @app.route('/reset_word', methods=['GET'])
 def reset_manual():
     global secret_word
-    old_word = secret_word
     secret_word = select_random_secret_word()
     return jsonify({
         "status": "success",
         "message": "Բառը փոխված է",
-        "new_word_debug": secret_word # Սա թողնում եմ, որ տեսնես ինչ բառ է ընտրել
+        "new_word_debug": secret_word
     })
 
 if __name__ == '__main__':
