@@ -71,7 +71,7 @@ def guess():
         
     score = cosine_similarity(v_user, v_target)
     # Վերածում ենք տոկոսի (0-100)
-    final_score = round(float(score) * 100, 2)
+    final_score = round((float(score) +1) * 50, 2)
     
     if final_score < 0:
         final_score = 0.0
