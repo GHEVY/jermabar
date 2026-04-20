@@ -26,14 +26,27 @@ allowed_words = load_dictionary()
 
 # 3. Ֆունկցիա AI-ից վեկտոր ստանալու համար
 def get_embedding(text):
-    response = requests.post(API_URL, headers=HEADERS, json={"inputs": text})
-    result = response.json()
-    
-    # Եթե մոդելը դեռ բեռնվում է (loading)
-    if isinstance(result, dict) and "error" in result:
+    try:
+        response = requests.post(API_URL, headers=HEADERS, json={"inputs": text})
+        
+        # Եթե API-ն սխալ է վերադարձրել (օրինակ 401 կամ 404)
+        if response.status_code != 200:
+            print(f"API Error: {response.status_code} - {response.text}")
+            return "loading"
+
+        result = response.json()
+        
+        if isinstance(result, dict) and "error" in result:
+            return "loading"
+            
+        embedding = np.array(result)
+        if embedding.ndim > 1:
+            embedding = embedding[0]
+        return embedding
+        
+    except Exception as e:
+        print(f"Exception in get_embedding: {e}")
         return "loading"
-    
-    return np.array(result)
 
 # 4. Հիմնական Route-ը խաղի համար
 @app.route('/guess', methods=['POST'])
