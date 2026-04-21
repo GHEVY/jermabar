@@ -14,7 +14,7 @@ CORS(app)
 # Здесь мы задаем твой токен. На Render лучше прописать его в Environment Variables.
 HF_TOKEN = os.environ.get("HF_TOKEN")
 # Хорошая мультиязычная модель для косинусного сходства (поддерживает армянский)
-HF_API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+HF_API_URL = "https://api-inference.huggingface.co/models/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 headers = {
     "Authorization": f"Bearer {HF_TOKEN}",
