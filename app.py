@@ -12,7 +12,7 @@ CORS(app)
 
 # Կարգավորումներ
 HF_TOKEN = os.environ.get("HF_TOKEN")
-HF_API_URL = "https://api-inference.huggingface.co/models/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+HF_API_URL = "https://router.huggingface.co/hf-inference/models/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/pipeline/feature-extraction"
 headers = {"Authorization": f"Bearer {HF_TOKEN}"}
 
 # Բառարանի բեռնում
@@ -35,8 +35,10 @@ def get_vector(word):
     last_error = "Unknown"
     for attempt in range(max_retries):
         try:
+            if not HF_TOKEN or HF_TOKEN == "None":
+                return None, "HF_TOKEN-ը բացակայում է: Ավելացրեք այն Render-ի Environment փոփոխականներում:"
+
             response = requests.post(HF_API_URL, headers=headers, json={"inputs": [word]})
-            
             if response.status_code == 200:
                 vectors = response.json()
                 return np.array(vectors[0]), None
@@ -50,8 +52,14 @@ def get_vector(word):
                 last_error = "503 Model Loading"
                 continue
                 
-            print(f"HF Error: {response.status_code} - {response.text}")
-            last_error = f"HF Error {response.status_code}: {response.text}"
+            try:
+                err_json = response.json()
+                err_text = err_json.get("error", response.text)
+            except:
+                err_text = response.text
+                
+            print(f"HF Error: {response.status_code} - {err_text}")
+            last_error = f"HF Error {response.status_code}: {err_text}"
             return None, last_error
         except Exception as e:
             print(f"Request error: {e}")
