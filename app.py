@@ -1,4 +1,5 @@
 import os
+import time
 import random
 import requests
 import numpy as np
@@ -16,11 +17,13 @@ headers = {"Authorization": f"Bearer {HF_TOKEN}"}
 
 # Բառարանի բեռնում
 VALID_WORDS = set()
+VALID_WORDS_LIST = []
 try:
     with open("valid_words.txt", "r", encoding="utf-8") as f:
         for line in f:
             word = line.strip().lower()
             if word: VALID_WORDS.add(word)
+    VALID_WORDS_LIST = list(VALID_WORDS)
     print(f"Loaded {len(VALID_WORDS)} words.")
 except Exception as e:
     print(f"Error loading dictionary: {e}")
@@ -28,16 +31,33 @@ except Exception as e:
 # AI Վեկտորի տրամաբանություն
 @lru_cache(maxsize=1000)
 def get_vector(word):
-    try:
-        response = requests.post(HF_API_URL, headers=headers, json={"inputs": [word]})
-        if response.status_code != 200:
+    max_retries = 3
+    last_error = "Unknown"
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(HF_API_URL, headers=headers, json={"inputs": [word]})
+            
+            if response.status_code == 200:
+                vectors = response.json()
+                return np.array(vectors[0]), None
+            
+            # Եթե մոդելը քնած է (503 Service Unavailable), սպասում ենք և նորից փորձում
+            if response.status_code == 503:
+                error_data = response.json()
+                wait_time = error_data.get("estimated_time", 20.0)
+                print(f"Model is loading. Waiting {wait_time}s (Attempt {attempt + 1}/{max_retries})...")
+                time.sleep(min(wait_time, 25))
+                last_error = "503 Model Loading"
+                continue
+                
             print(f"HF Error: {response.status_code} - {response.text}")
-            return None
-        vectors = response.json()
-        return np.array(vectors[0])
-    except Exception as e:
-        print(f"Request error: {e}")
-        return None
+            last_error = f"HF Error {response.status_code}: {response.text}"
+            return None, last_error
+        except Exception as e:
+            print(f"Request error: {e}")
+            last_error = f"Exception: {str(e)}"
+            return None, last_error
+    return None, last_error
 
 def cosine_similarity(v1, v2):
     n1, n2 = np.linalg.norm(v1), np.linalg.norm(v2)
@@ -47,14 +67,14 @@ def cosine_similarity(v1, v2):
 # Երթուղիներ (Routes)
 @app.route('/get_initial_word', methods=['GET'])
 def get_initial_word():
-    if not VALID_WORDS:
+    if not VALID_WORDS_LIST:
         return jsonify({"error": "Բառարանը դատարկ է"}), 500
     
-    random_word = random.choice(list(VALID_WORDS))
-    vector = get_vector(random_word)
+    random_word = random.choice(VALID_WORDS_LIST)
+    vector, err_msg = get_vector(random_word)
     
     if vector is None:
-        return jsonify({"error": "AI-ն անհասանելի է"}), 500
+        return jsonify({"error": f"AI-ն անհասանելի է: {err_msg}"}), 500
 
     return jsonify({
         "word": random_word,
@@ -75,9 +95,9 @@ def guess():
     if user_word not in VALID_WORDS:
         return jsonify({"error": "Բառը չկա բազայում"}), 404
 
-    v_user = get_vector(user_word)
+    v_user, err_msg = get_vector(user_word)
     if v_user is None:
-        return jsonify({"error": "AI-ն անհասանելի է"}), 500
+        return jsonify({"error": f"AI-ն անհասանելի է: {err_msg}"}), 500
 
     v_secret = np.array(secret_vector_list)
     score = cosine_similarity(v_user, v_secret)
